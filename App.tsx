@@ -6,29 +6,26 @@ import { generateMonths } from './utils';
 import { MonthData, ExpenseItem, User } from './types';
 
 const App: React.FC = () => {
-  // Years configuration: includes current year + requested range
+  // Years configuration
   const currentSystemYear = new Date().getFullYear();
   const availableYears = Array.from(new Set([currentSystemYear, 2026, 2027, 2028, 2029, 2030])).sort((a, b) => a - b);
   
   const [selectedYear, setSelectedYear] = useState(currentSystemYear);
   const monthsList = generateMonths(selectedYear);
   
-  // State for selected month index (0 = Jan, 11 = Dec)
   const [selectedMonthIndex, setSelectedMonthIndex] = useState(new Date().getMonth());
-  
-  // Main data state
   const [data, setData] = useState<Record<string, MonthData>>({});
-  
-  // User Auth State
   const [user, setUser] = useState<User | null>(null);
+  
+  // Mobile Sidebar State
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // Initialize data on load or when year changes
+  // Initialize data
   useEffect(() => {
     const savedData = localStorage.getItem(`budget-app-data-${selectedYear}`);
     if (savedData) {
       setData(JSON.parse(savedData));
     } else {
-      // Initialize empty structure for all months of the selected year
       const initialData: Record<string, MonthData> = {};
       monthsList.forEach((name, index) => {
         const id = `${selectedYear}-${String(index + 1).padStart(2, '0')}`;
@@ -52,7 +49,7 @@ const App: React.FC = () => {
     }
   }, []);
 
-  // Save to local storage whenever data changes
+  // Save to local storage
   useEffect(() => {
     const dataKeys = Object.keys(data);
     if (dataKeys.length > 0) {
@@ -80,14 +77,12 @@ const App: React.FC = () => {
   const handleSignUp = (name: string, email: string, pass: string): boolean => {
     const storedUsers = JSON.parse(localStorage.getItem('budget-app-users') || '{}');
     if (storedUsers[email]) {
-      return false; // User exists
+      return false; 
     }
     
-    // Save new user
     storedUsers[email] = { name, password: pass };
     localStorage.setItem('budget-app-users', JSON.stringify(storedUsers));
     
-    // Auto login
     const newUser = { name, email };
     setUser(newUser);
     localStorage.setItem('budget-app-session', JSON.stringify(newUser));
@@ -95,7 +90,6 @@ const App: React.FC = () => {
   };
 
   const handleGoogleSignIn = () => {
-    // Mock Google Sign In
     const mockUser = {
       name: "Google User",
       email: "user@gmail.com"
@@ -176,7 +170,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="flex bg-gray-50 min-h-screen">
+    <div className="flex bg-gray-50 min-h-screen relative">
       <Sidebar
         months={monthsList}
         selectedMonthIndex={selectedMonthIndex}
@@ -184,6 +178,8 @@ const App: React.FC = () => {
         availableYears={availableYears}
         selectedYear={selectedYear}
         onSelectYear={setSelectedYear}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
       />
       <MonthView
         monthData={currentMonthData}
@@ -197,6 +193,7 @@ const App: React.FC = () => {
         onSignUp={handleSignUp}
         onGoogleSignIn={handleGoogleSignIn}
         onSignOut={handleSignOut}
+        onMobileMenuClick={() => setIsSidebarOpen(true)}
       />
     </div>
   );
